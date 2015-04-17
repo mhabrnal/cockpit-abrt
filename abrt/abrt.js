@@ -67,7 +67,7 @@ $( document ).ready( function() {
 
         row += get_action_btn();
 
-        return "<tr id=\"" + problem_id + "\" class=\"problem\">" + row + "</tr><tr class=\"detail_list hidden\"><td colspan=\"7\"></td></tr>";
+        return "<tr id=\"" + escapeHtml(problem_id) + "\" class=\"problem\">" + row + "</tr><tr class=\"detail_list hidden\"><td colspan=\"7\"></td></tr>";
     }
 
     function format_problem_data(problem_data, elem) {
@@ -280,12 +280,12 @@ $( document ).ready( function() {
 
                     problem_content = problem_content.replace(/\n/g, "<br>");
 
-                    text += "<tr class=\"detail detail_dropdown\"><td class=\"detail_label\">" + elem;
+                    text += "<tr class=\"detail detail_dropdown\"><td class=\"detail_label\">" + escapeHtml(elem);
                     text += "</td><td class=\"detail_content\"><span class=\"detail_dropdown_span fa fa-angle-right\"></span></td></tr>";
                     text += "<tr class=\"detail hidden\"><td class=\"detail_label\">";
                 }
                 else {
-                    text += "<tr class=\"detail\"><td class=\"detail_label\">" + elem;
+                    text += "<tr class=\"detail\"><td class=\"detail_label\">" + escapeHtml(elem);
                 }
                 text += "</td><td class=\"detail_content " + additional_classes + "\">" + problem_content + "</td></tr>";
             }
