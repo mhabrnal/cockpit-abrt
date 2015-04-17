@@ -360,9 +360,8 @@ $( document ).ready( function() {
         if (problem_content.match(/^[^=\n]+=[^\n]*/) != null) {
             problem_content = problem_content.replace(/^([^=\s]+=)(.*)$/gm, "<b>$1</b>$2");
         }
-
         /* bold variable 'ABC: abc' -> '<b>ABC: </b>abc' */
-        if (problem_content.match(/^[^:\n]+:[^\n]*/) != null && elem != "dead.letter") {
+        else if (problem_content.match(/^[^:\n]+:[^\n]*/) != null && elem != "dead.letter") {
             problem_content = problem_content.replace(/^([^:=;\d]+ ?:)(.*)$/gm, "<b>$1</b>$2");
             problem_content = problem_content.replace(/^(\[[^:=;]+\] ?:)(.*)$/gm, "<b>$1</b>$2");
         }
