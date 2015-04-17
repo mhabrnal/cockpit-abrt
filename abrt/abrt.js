@@ -266,6 +266,18 @@ $( document ).ready( function() {
 
                     problem_content = highlight_multiline_items(problem_content, elem);
 
+                    if (elem == "limits") {
+                        problem_content = create_table_from_problem_data(problem_content, " {2,}", 4);
+                    }
+
+                    if (elem == "maps") {
+                        problem_content = create_table_from_problem_data(problem_content, " +", 6);
+                    }
+
+                    if (elem == "mountinfo") {
+                        problem_content = create_table_from_problem_data(problem_content, " +", 11, true);
+                    }
+
                     problem_content = problem_content.replace(/\n/g, "<br>");
 
                     text += "<tr class=\"detail detail_dropdown\"><td class=\"detail_label\">" + elem;
@@ -279,6 +291,66 @@ $( document ).ready( function() {
             }
         }
         return text;
+    }
+
+    function create_table_from_problem_data(problem_content, regexp_str, column_count,  big_table = false) {
+
+        var  max_width = get_max_column_width(column_count);
+
+        var problem_content_lines = problem_content.split('\n');
+
+        var regexp = new RegExp(regexp_str,"g");
+        var table_content = "";
+        for (var line in problem_content_lines) {
+
+            table_content += "<tr>";
+            var items = problem_content_lines[line].split(regexp);
+            for (var item in items) {
+                var item_text = items[item];
+
+                /* if is length of the text more than 8 and it is a big table add title to the item */
+                var title = "";
+                if (item_text.length > 8) {
+                    title = "title=\"" + item_text + "\"";
+                }
+                table_content += "<td style=\"max-width: " + max_width + "px\"" + title + " >";
+
+                table_content += items[item];
+                table_content += "</td>";
+            }
+            table_content += "</tr>";
+        }
+
+
+        return "<table class=\"detail_table\">" + table_content + "</table>";
+    }
+
+    /* the function count max_width of one column in detail table
+    depending on the width of the table.
+    The function calculates a width of one column and multiplies it by a value which
+    depends on a width of table.
+    All constants in the function I got experimentally */
+    function get_max_column_width(column_count) {
+        var min_from = 600;
+        var max_from = 1800;
+
+        var min_to = 0.7;
+        var max_to = 2.2;
+
+        var width = ($(".problem").first().width());
+        if (width < min_from)
+            width = min_from;
+
+        if (width > max_from)
+            width = max_from;
+
+        var normalize = (width - min_from)/(max_from-min_from);
+        normalize = min_to + normalize * (max_to - min_to);
+
+        var width_one_column = ($(".problem").first().width()) / column_count;
+        var max_width = Math.round(width_one_column * normalize);
+
+        return max_width;
     }
 
     function highlight_multiline_items(problem_content, elem) {

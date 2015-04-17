@@ -96,3 +96,11 @@ table
     white-space: pre-wrap;
     word-wrap: break-word;
 }
+
+.detail_table > tbody > tr > td
+{
+    padding-right: 10px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
