@@ -540,7 +540,7 @@ $( document ).ready( function() {
 
         /* bold titles of items in open_fds */
         if (elem == "open_fds") {
-            problem_content = problem_content.replace(/^(\d+:.*\d+)$/gm, "<b>$1</b>");
+            problem_content = problem_content.replace(/^(\d+:.*)$/gm, "<b>$1</b>");
         }
 
         return problem_content;
