@@ -162,6 +162,30 @@ $( document ).ready( function() {
     }
 
     function create_detail(problem_data, problem_id) {
+
+        /* get instruction how to report problem if problem is not reported and is reportable */
+        var how_to_report = "";
+        if (!problem_data.hasOwnProperty("not-reportable")) {
+            var reported = false;
+
+            if (problem_data.hasOwnProperty("reported_to")) {
+                var reported_to = problem_data["reported_to"][2];
+                reported_to = reported_to.split("\n");
+
+                for (var i = 0; i < reported_to.length; ++i) {
+                    var line = reported_to[i];
+                    if (line.substring(0, 8) != "uReport:" && line.substring(0, 12) != "ABRT Server:" && line != "") {
+                        reported = true;
+                        break;
+                    }
+                }
+            }
+            /* bug is not reported */
+            if (reported == false) {
+                how_to_report += "<tr class=\"how_to_report\"><td colspan=\"2\"><div class=\"inline_block\">Please run the following command on the machine where the crash occurred in order to report the problem:<br/><samp>$ abrt-cli report " + problem_id + "</samp></div></td></tr>";
+            }
+        }
+
         var text = "";
         /*  show detail_elements */
         for (i = 0; i < detail_elements.length; i++) {
@@ -207,27 +231,8 @@ $( document ).ready( function() {
             text += create_detail_element(problem_data, problem_id, elem_name);
         }
 
-        /* add instruction how to report problem if problem is not reported and is reportable */
-        if (!problem_data.hasOwnProperty("not-reportable")) {
-            var reported = false;
-
-            if (problem_data.hasOwnProperty("reported_to")) {
-                var reported_to = problem_data["reported_to"][2];
-                reported_to = reported_to.split("\n");
-
-                for (var i = 0; i < reported_to.length; ++i) {
-                    var line = reported_to[i];
-                    if (line.substring(0, 8) != "uReport:" && line.substring(0, 12) != "ABRT Server:" && line != "") {
-                        reported = true;
-                        break;
-                    }
-                }
-            }
-            /* bug is not reported */
-            if (reported == false) {
-                text += "<tr class=\"how_to_report\"><td colspan=\"2\"><div class=\"inline_block\">Please run the following command on the machine where the crash occurred in order to report the problem:<br/><samp>$ abrt-cli report " + problem_id + "</samp></div></td></tr>";
-            }
-        }
+        /* add instruction how to report bug if the bug not has been reported yet */
+        text += how_to_report;
 
         return text;
     }
