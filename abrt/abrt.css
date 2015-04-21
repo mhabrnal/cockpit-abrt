@@ -97,10 +97,20 @@ table
     word-wrap: break-word;
 }
 
-.detail_table > tbody > tr > td
+.detail_table > tbody > tr > td, .detail_table > thead > tr > th
 {
     padding-right: 10px;
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
+}
+
+.other-threads-btn
+{
+    margin-top: 20px;
+}
+
+.other_threads
+{
+    clear: both;
 }

@@ -246,6 +246,11 @@ $( document ).ready( function() {
             elem = elem_name.name;
             if (problem_content != "") {
 
+                /* core_backtrace is json and will be parsed */
+                if (elem != "core_backtrace") {
+                    problem_content = escapeHtml(problem_content);
+                }
+
                 var additional_classes = "";
                 if (elem == "docker_inspect") {
                     additional_classes += "pre ";
@@ -263,6 +268,10 @@ $( document ).ready( function() {
                 }
 
                 if (problem_content.indexOf('\n') != -1) {
+
+                    if (elem == "core_backtrace") {
+                        problem_content = create_detail_core_backtrace(problem_content);
+                    }
 
                     problem_content = highlight_multiline_items(problem_content, elem);
 
@@ -291,6 +300,169 @@ $( document ).ready( function() {
             }
         }
         return text;
+    }
+
+    function create_detail_core_backtrace(content) {
+        var content_json = JSON.parse(content);
+
+        var crash_thread = null;
+        var other_threads = new Array();
+        var other_items = {}
+
+        for (var item in content_json) {
+
+            if (item == "stacktrace") {
+
+                var threads = content_json[item];
+                for (var thread_key in threads) {
+
+                    var thread = threads[thread_key];
+
+                    if (thread.hasOwnProperty("crash_thread") && thread["crash_thread"] == true) {
+                        if (thread.hasOwnProperty("frames")) {
+                            crash_thread = thread["frames"];
+                        }
+                    }
+                    else {
+                        if (thread.hasOwnProperty("frames")) {
+                            other_threads.push(thread["frames"]);
+                        }
+                    }
+                }
+            }
+            else {
+                other_items[item] = content_json[item];
+            }
+        }
+        var table = create_detail_from_parsed_core_backtrace(crash_thread, other_threads, other_items);
+
+        return table;
+    }
+
+    function create_detail_from_parsed_core_backtrace(crash_thread, other_threads, other_items) {
+
+        var detail_content = "";
+        for (var item in other_items) {
+            detail_content += item;
+            detail_content += ": ";
+            detail_content += other_items[item];
+            detail_content += "\n";
+        }
+
+        detail_content += "stacktrace:\n";
+        detail_content += "thread: crash thread\n";
+
+        detail_content += create_table_from_thread(crash_thread);
+
+        if (other_threads.length != 0) {
+            detail_content += "<div id=\"other_threads_btn_div\"><button class=\"btn btn-default other-threads-btn\" title=\"\">Show all threads</button></div>";
+            detail_content += "<div class=\"hidden other_threads\">";
+
+            var thread_num = 1;
+            for (var thread_key in other_threads) {
+                detail_content += "\n";
+                detail_content += "thread: " + thread_num++ + "\n";
+                detail_content += create_table_from_thread(other_threads[thread_key]);
+            }
+            detail_content += "</div>";
+        }
+
+        return detail_content;
+    }
+
+    $( document ).on('click', '.other-threads-btn', function( event ) {
+        event.stopPropagation();
+        if ($(".other_threads").hasClass("hidden")) {
+            $(".other_threads").removeClass("hidden");
+            $(this).text("Hide threads");
+        }
+        else {
+            $(".other_threads").addClass("hidden");
+            $(this).text("Show all threads");
+        }
+    });
+
+    function create_table_from_thread(thread) {
+
+        var all_keys = get_all_keys_from_frames(thread);
+
+        /* +1 because of 'Frame #' column */
+        /* +1 because of better look */
+        var  max_width = get_max_column_width(all_keys.length + 2);
+
+        /* create table legend */
+        var table = "<table class=\"detail_table\"><thead><tr><th>Fr #</th>";
+        for (var key in all_keys) {
+            table += "<th style=\"max-width: " + max_width + "px\">";
+            table += get_readable_title(all_keys[key]);
+            table += "</th>";
+        }
+        table += "</tr></thead><tbody>";
+
+        var frame_num = 1;
+        for (var frame_key in thread) {
+            table += "<tr>";
+            table += "<td style=\"max-width: " + max_width + "px\">";
+            table += frame_num++;
+            table += "</td>";
+
+            var frame = thread[frame_key];
+            for (var key_key in all_keys) {
+                var key = all_keys[key_key];
+
+                var title = "";
+                var row_content = "";
+                if (frame.hasOwnProperty(key) != 0) {
+                    row_content = frame[key].toString();
+                    if (row_content.length > 8)
+                        title = row_content;
+                }
+                else
+                    row_content = "";
+
+                table += "<td style=\"max-width: " + max_width + "px\" title=\"" + title + "\">";
+                table += row_content;
+                table += "</td>";
+            }
+            table += "</tr>";
+        }
+
+        table += "</tbody></table>";
+        return table;
+    }
+
+    function get_all_keys_from_frames(thread) {
+        var all_keys = new Array();
+
+        for (var frame_key in thread) {
+            var frame = thread[frame_key];
+            var keys = Object.keys(frame);
+
+            for (var key in keys) {
+                if (all_keys.indexOf(keys[key]) == -1)
+                    all_keys.push(keys[key]);
+            }
+        }
+
+        /* order keys */
+        var desired_ordered_of_keys = ["function_name", "file_name", "address", "build_id", "build_id_offset"];
+
+        var all_ordered_keys = new Array();
+
+        for (var key_key in desired_ordered_of_keys) {
+            var key = desired_ordered_of_keys[key_key];
+            var key_index = all_keys.indexOf(key);
+            if (key_index != -1) {
+                all_ordered_keys.push(key);
+                delete all_keys[key_index];
+            }
+        }
+
+        for(var key_key in all_keys) {
+            all_ordered_keys.push(all_keys[key_key]);
+        }
+
+        return all_ordered_keys;
     }
 
     function create_table_from_problem_data(problem_content, regexp_str, column_count,  big_table = false) {
@@ -440,7 +612,7 @@ $( document ).ready( function() {
 
             /* remove the shown element */
             delete problem_data[elem];
-            return escapeHtml(content);
+            return content;
         }
         return "";
     }
@@ -516,5 +688,10 @@ $( document ).ready( function() {
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;")
             .replace(/\//g, "&#x2F;")
+    }
+
+    function get_readable_title(title) {
+        title = title.replace(/_/g, " ");
+        return title.charAt(0).toUpperCase() + title.slice(1);
     }
 });
