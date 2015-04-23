@@ -80,7 +80,6 @@ table
 
 .how_to_report
 {
-    height: 60px;
     vertical-align: bottom;
     text-align: center;
 }
@@ -89,6 +88,7 @@ table
 {
     display: inline-block;
     text-align: left;
+    margin-top: 3ex;
 }
 
 .pre
